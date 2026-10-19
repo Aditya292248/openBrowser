@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "command", rename_all = "lowercase")]
 pub enum Command {
     Open { url: String },
     Url,
@@ -111,7 +113,9 @@ fn required(
     command: &'static str,
     argument: &'static str,
 ) -> Result<String, ParseError> {
-    let value = args.next().ok_or(ParseError::MissingArgument { command, argument })?;
+    let value = args
+        .next()
+        .ok_or(ParseError::MissingArgument { command, argument })?;
     if value.trim().is_empty() {
         return Err(ParseError::InvalidArgument {
             command,
@@ -229,7 +233,10 @@ mod tests {
 
     #[test]
     fn reports_missing_command_and_operands() {
-        assert_eq!(parse_args(Vec::<&str>::new()), Err(ParseError::MissingCommand));
+        assert_eq!(
+            parse_args(Vec::<&str>::new()),
+            Err(ParseError::MissingCommand)
+        );
         assert_eq!(
             parse_args(["open"]),
             Err(ParseError::MissingArgument {

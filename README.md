@@ -1,10 +1,10 @@
 # my_browser
 
-A Rust CLI skeleton for browser commands. It parses and validates commands, but does not connect to or control a browser yet. A valid command exits with status `1` and a clear "browser execution is not implemented" error; invalid syntax exits with status `2`.
+A Rust CLI that controls one persistent Chrome or Chromium tab through a local browser daemon. Separate CLI invocations share the daemon's browser session until `close` stops it.
 
 ## Build and test
 
-Install a Rust toolchain with Cargo and a linker for your platform, then run from this directory:
+Install a Rust toolchain with Cargo, a linker for your platform, and Chrome or Chromium. Then run from this directory:
 
 ```sh
 cargo build
@@ -12,18 +12,22 @@ cargo test
 cargo run -- --help
 ```
 
-## Commands
+## Use
 
-```text
-my_browser open <url>
-my_browser url
-my_browser title
-my_browser snapshot
-my_browser click <target>
-my_browser fill <target> <text>
-my_browser close
+```sh
+cargo run -- open https://example.com
+cargo run -- url
+cargo run -- title
+cargo run -- snapshot
+cargo run -- click "a.more-info"
+cargo run -- fill "input[name=q]" "hello world"
+cargo run -- close
 ```
 
-`open` accepts HTTP and HTTPS URLs. Quote a target or text argument if it contains spaces, for example `cargo run -- fill "#search" "hello world"`. An empty `text` argument is allowed so a future executor can clear a field.
+`open` accepts HTTP and HTTPS URLs. It starts the daemon in the background if needed, launches a headless browser, and navigates the shared tab. `url` returns that tab's current URL; `title` returns its document title. `snapshot` prints the full page HTML. `click` and `fill` use CSS selectors. `fill` replaces the existing value of an input, textarea, or editable element; an empty text argument clears it. `close` closes the browser and stops the daemon. Quote arguments that contain spaces.
 
-The code is split into `commands` (typed commands and parsing), `execution` (the browser integration boundary), and `output` (CLI messages and usage).
+Use `cargo run -- daemon start` to start the daemon without opening a page, or `cargo run -- daemon serve` to run it in the current terminal and see startup errors. The browser uses an isolated temporary profile; closing the daemon discards its browsing state. Set `MY_BROWSER_CHROME_PATH` to a Chrome or Chromium executable if automatic detection fails. Set `MY_BROWSER_HEADLESS=0` before starting the daemon to show the browser window.
+
+The daemon listens only on a random loopback port and requires a random token stored in a per-user runtime file. The file is under `%LOCALAPPDATA%\my_browser` on Windows, or `$XDG_RUNTIME_DIR/my_browser` (falling back to `$HOME/.cache/my_browser`) on Unix. `MY_BROWSER_RUNTIME_DIR` overrides the parent directory. A stale file from a crashed daemon is replaced on the next start.
+
+The code is split into `commands` (typed commands and parsing), `execution` (daemon client), `daemon` and `protocol` (local request handling), `browser` (Chrome actions), `session` (daemon discovery), and `output` (CLI messages).

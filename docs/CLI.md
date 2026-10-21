@@ -2,6 +2,8 @@
 
 Run commands with the built `my_browser` binary, or use `cargo run --` before each command as shown below. Each invocation exits after printing its result; the browser stays open in the daemon.
 
+Run Cargo commands from the repository root. The workspace selects `crates/browser-cli` by default; `cargo run -p my_browser -- <command>` selects the same package explicitly. The debug binary is written to the root `target/debug/` directory.
+
 ## Browser commands
 
 | Command | Result |

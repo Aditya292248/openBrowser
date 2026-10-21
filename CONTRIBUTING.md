@@ -4,7 +4,7 @@ Thanks for helping build a small browser CLI. Keep changes focused and easy to r
 
 ## Setup
 
-Install a Rust toolchain with Cargo and a linker for your platform. Install Chrome or Chromium for the browser integration test. From the repository root, run:
+Install a Rust toolchain with Cargo and a linker for your platform. Install Chrome or Chromium for manual browser checks. From the repository root, run:
 
 ```sh
 cargo build --locked
@@ -28,4 +28,4 @@ On Windows, native Rust builds also need a C/C++ linker. `MY_BROWSER_CHROME_PATH
 
 Keep each PR about one behavior. Describe the user-visible change first, then how you tested it and any remaining limitation. Run `cargo fmt --check`, `cargo test --locked`, and `cargo build --locked` before opening a PR. Add a test for a bug or a changed output contract. Do not commit browser profiles, session tokens, or secrets.
 
-`tests/browser_integration.rs` runs every browser command against a local page through separate CLI processes. It uses an isolated daemon runtime directory and closes the browser when the test ends. The CI job runs this test with Chrome on each PR. Set `MY_BROWSER_CHROME_PATH` when Chrome is not on your `PATH`.
+Chrome-dependent behavior also needs a manual smoke check: open a local or public page, read `url` and `title`, then `close`. Record that result in the PR.

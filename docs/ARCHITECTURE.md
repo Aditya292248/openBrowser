@@ -10,6 +10,8 @@ main <- output   <- execution <--TCP JSON-- daemon
 
 ## Request path
 
+The root `Cargo.toml` defines a workspace. Its default member is `crates/browser-cli`, which contains the existing `my_browser` package and binary. All modules below live in `crates/browser-cli/src/`. Build artifacts and the shared `Cargo.lock` stay at the repository root.
+
 1. `main.rs` selects text or `--json` output and asks `commands.rs` to parse the arguments. Invalid arguments exit with code 2.
 2. An `open` command starts a detached daemon if one is not running. `daemon start` can start it explicitly. The daemon does not launch Chrome until the first `open`.
 3. `session.rs` stores the daemon's random loopback port and token in a runtime file. `execution.rs` reads it and connects to the daemon.
@@ -32,4 +34,4 @@ Chrome runs headless by default with an isolated temporary profile. The CLI does
 
 ## Tests
 
-Module tests cover parsing, output formatting, protocol limits, and daemon request handling. `tests/cli_json.rs` checks CLI output and exit codes across processes. `tests/browser_integration.rs` serves a local page and checks all browser commands across separate CLI processes with a real Chrome session. The [browser integration workflow](../.github/workflows/browser-integration.yml) runs the Rust tests with Chrome on pull requests and pushes to `main`.
+Module tests cover parsing, output formatting, protocol limits, and daemon request handling. `crates/browser-cli/tests/cli_json.rs` checks CLI output and exit codes across processes. `crates/browser-cli/tests/browser_integration.rs` serves a local page and checks all browser commands across separate CLI processes with a real Chrome session. The [browser integration workflow](../.github/workflows/browser-integration.yml) builds and tests the workspace with Chrome on pull requests and pushes to `main`.

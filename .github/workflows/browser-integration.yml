@@ -15,8 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check formatting
-        run: cargo fmt --check
+        run: cargo fmt --all --check
+      - name: Build workspace
+        run: cargo build --workspace --locked
       - name: Find Chrome
         run: command -v google-chrome
       - name: Run all tests with Chrome
-        run: MY_BROWSER_CHROME_PATH="$(command -v google-chrome)" cargo test --locked
+        run: MY_BROWSER_CHROME_PATH="$(command -v google-chrome)" cargo test --workspace --locked

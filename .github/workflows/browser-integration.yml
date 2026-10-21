@@ -1,0 +1,22 @@
+name: Browser integration
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Find Chrome
+        run: command -v google-chrome
+      - name: Run all tests with Chrome
+        run: MY_BROWSER_CHROME_PATH="$(command -v google-chrome)" cargo test --locked

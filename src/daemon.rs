@@ -3,6 +3,7 @@ use crate::commands::Command;
 use crate::protocol::{self, Request, Response};
 use crate::session::{self, DaemonInfo};
 use std::env;
+use std::io::ErrorKind;
 use std::net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream};
 use std::process::{Command as ProcessCommand, Stdio};
 use std::thread;
@@ -127,7 +128,16 @@ fn serve_requests<E: BrowserExecutor>(
             Err(error) => Response::Err { error },
         };
         let should_stop = stop && matches!(&response, Response::Ok { .. });
-        let _ = protocol::write_message(&mut stream, &response);
+        if let Err(error) = protocol::write_message(&mut stream, &response) {
+            if error.kind() == ErrorKind::InvalidData {
+                let _ = protocol::write_message(
+                    &mut stream,
+                    &Response::Err {
+                        error: error.to_string(),
+                    },
+                );
+            }
+        }
         if should_stop {
             break;
         }
@@ -161,6 +171,7 @@ mod tests {
                     .current_url
                     .clone()
                     .ok_or_else(|| "no page is open".to_string()),
+                Command::Snapshot => Ok("x".repeat(16 * 1024 * 1024)),
                 Command::Close => Ok("closed".to_string()),
                 _ => Err("unsupported in fake browser".to_string()),
             }
@@ -217,6 +228,23 @@ mod tests {
             execute_with_info(&right, &Command::Close).unwrap(),
             "closed"
         );
+        server.join().unwrap();
+    }
+
+    #[test]
+    fn oversized_snapshot_returns_a_clear_error() {
+        let listener = TcpListener::bind(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0)).unwrap();
+        let info = DaemonInfo {
+            port: listener.local_addr().unwrap().port(),
+            token: "test-token".to_string(),
+        };
+        let server = thread::spawn(|| {
+            serve_requests(listener, "test-token", &mut FakeBrowser::default()).unwrap()
+        });
+
+        let error = execute_with_info(&info, &Command::Snapshot).unwrap_err();
+        assert_eq!(error.to_string(), "message exceeds the 16 MiB limit");
+        assert_eq!(execute_with_info(&info, &Command::Close).unwrap(), "closed");
         server.join().unwrap();
     }
 }

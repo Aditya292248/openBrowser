@@ -578,6 +578,7 @@ dependencies = [
  "headless_chrome",
  "serde",
  "serde_json",
+ "tempfile",
  "uuid",
 ]
 
